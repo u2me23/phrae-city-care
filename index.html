@@ -2,150 +2,263 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>Phrae City Care - รายงานปัญหาเมืองแพร่</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบรับเรื่องร้องเรียน สส.มานะ กล้าหาญ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Kanit', sans-serif; display: flex; height: 100vh; }
-        #map { flex: 1; height: 100vh; width: 100%; }
-        
-        .sidebar {
-            width: 380px;
-            background: white;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-            padding: 20px;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            overflow-y: auto;
-            height: 100vh;
-        }
-
-        .header { border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-bottom: 10px; }
-        .header h2 { margin: 0; color: #007bff; font-size: 1.5rem; }
-
-        .form-group { display: flex; flex-direction: column; gap: 5px; }
-        label { font-weight: 600; color: #444; }
-        input, select, textarea {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-family: 'Kanit', sans-serif;
-        }
-
-        .btn-submit {
-            background: #28a745;
-            color: white;
-            padding: 12px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-        }
-        .btn-submit:hover { background: #218838; }
-        .btn-submit:disabled { background: #ccc; cursor: not-allowed; }
-        
-        .status-msg { 
-            font-size: 0.9rem; 
-            padding: 10px;
-            border-radius: 5px;
-        }
-        .status-msg.success { 
-            background: #d4edda;
-            color: #155724;
-        }
-        .status-msg.error { 
-            background: #f8d7da;
-            color: #721c24;
-        }
-        .coords { font-size: 0.85rem; color: #666; }
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap');
+        body { font-family: 'Sarabun', sans-serif; scroll-behavior: smooth; }
+        .admin-mode { display: none; }
+        /* สีส้มพรรคประชาชน */
+        .bg-pp-orange { background-color: #FF5C00; }
+        .text-pp-orange { color: #FF5C00; }
+        .border-pp-orange { border-color: #FF5C00; }
     </style>
 </head>
-<body>
+<body class="bg-gray-50 text-slate-800">
 
-    <div class="sidebar">
-        <div class="header">
-            <h2>📍 รายงานปัญหา</h2>
-            <p style="font-size: 0.85rem; color: #666;">คลิกบนแผนที่เพื่อเลือกจุดที่พบปัญหา</p>
-        </div>
+    <div id="user-view">
+        <nav class="bg-slate-900 text-white p-4 sticky top-0 z-50 shadow-md border-b-4 border-pp-orange">
+            <div class="container mx-auto flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-pp-orange rotate-45 flex items-center justify-center">
+                        <i class="fas fa-chevron-right text-white -rotate-45"></i>
+                    </div>
+                    <h1 class="text-xl font-bold tracking-tight">สส. มานะ กล้าหาญ</h1>
+                </div>
+                <div class="space-x-6 text-sm font-medium flex items-center">
+                    <a href="#home" class="hover:text-pp-orange transition">หน้าหลัก</a>
+                    <a href="#news" class="hover:text-pp-orange transition hidden md:block">ผลงาน</a>
+                    <a href="#report" class="bg-pp-orange px-4 py-2 text-white font-bold hover:bg-orange-600 transition">แจ้งปัญหา</a>
+                </div>
+            </div>
+        </nav>
 
-        <div class="form-group">
-            <label>📌 พิกัดที่เลือก:</label>
-            <div class="coords" id="display-coords">ยังไม่ได้เลือกจุด</div>
-        </div>
+        <header id="home" class="bg-white py-16">
+            <div class="container mx-auto px-4 flex flex-col md:flex-row items-center gap-12">
+                <div class="relative">
+                    <div class="w-56 h-56 bg-slate-200 rounded-none overflow-hidden shadow-2xl border-b-8 border-pp-orange">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Mana" alt="นายมานะ" class="w-full h-full object-cover">
+                    </div>
+                    <div class="absolute -bottom-4 -right-4 bg-pp-orange text-white p-3 font-bold text-sm">
+                        เขต 777 ดาวอังคาร
+                    </div>
+                </div>
+                <div class="text-center md:text-left">
+                    <h2 class="text-4xl font-black text-slate-900 mb-2 uppercase italic">นาย.มานะ กล้าหาญ</h2>
+                    <p class="text-pp-orange text-xl font-bold mb-4">พรรคผ่อน | Get rest Party</p>
+                    <p class="text-slate-600 text-lg max-w-xl leading-relaxed">
+                        "เพราะเสียงของทุกคนคือพลังของการเปลี่ยนแปลง เรามุ่งมั่นแก้ไขปัญหาเชิงโครงสร้างเพื่อคุณภาพชีวิตที่เท่าเทียม"
+                    </p>
+                </div>
+            </div>
+        </header>
 
-        <div class="form-group">
-            <label>ประเภทปัญหา:</label>
-            <select id="problem-type">
-                <option value="">-- เลือก --</option>
-                <option value="ถนน/ทางเท้า">ถนน/ทางเท้า</option>
-                <option value="ขยะ/ความสะอาด">ขยะ/ความสะอาด</option>
-                <option value="ไฟฟ้าส่องสว่าง">ไฟฟ้าส่องสว่าง</option>
-                <option value="ท่อระบายน้ำ">ท่อระบายน้ำ</option>
-                <option value="อื่นๆ">อื่นๆ</option>
-            </select>
-        </div>
+        <section id="news" class="py-16 bg-slate-100">
+            <div class="container mx-auto px-4 text-center mb-12">
+                <h3 class="text-3xl font-bold inline-border border-b-4 border-pp-orange pb-2">อัปเดตการทำงาน</h3>
+            </div>
+            <div class="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white border-t-4 border-pp-orange shadow-md p-6 hover:shadow-xl transition">
+                    <div class="w-12 h-12 bg-orange-50 flex items-center justify-center mb-4"><i class="fas fa-road text-pp-orange text-2xl"></i></div>
+                    <h4 class="font-bold text-lg mb-2">ติดตามซ่อมถนนซอยอารีย์</h4>
+                    <p class="text-sm text-gray-600">ลงพื้นที่เร่งหน่วยงานแก้ไขพื้นผิวจราจรที่ชำรุดจากการวางท่อประปาให้เสร็จตามกำหนด</p>
+                </div>
+                <div class="bg-white border-t-4 border-pp-orange shadow-md p-6 hover:shadow-xl transition">
+                    <div class="w-12 h-12 bg-orange-50 flex items-center justify-center mb-4"><i class="fas fa-school text-pp-orange text-2xl"></i></div>
+                    <h4 class="font-bold text-lg mb-2">ผลักดันสวัสดิการโรงเรียน</h4>
+                    <p class="text-sm text-gray-600">นำเสนอโมเดลอาหารกลางวันคุณภาพในสภา เพื่อยกระดับโภชนาการเด็กเล็กในเขตพื้นที่</p>
+                </div>
+                <div class="bg-white border-t-4 border-pp-orange shadow-md p-6 hover:shadow-xl transition">
+                    <div class="w-12 h-12 bg-orange-50 flex items-center justify-center mb-4"><i class="fas fa-lightbulb text-pp-orange text-2xl"></i></div>
+                    <h4 class="font-bold text-lg mb-2">เพิ่มไฟส่องสว่างเลียบคลอง</h4>
+                    <p class="text-sm text-gray-600">ประสานงานติดตั้งไฟ LED เพิ่มเติม 15 จุด ในพื้นที่เปลี่ยวเพื่อลดความเสี่ยงอาชญากรรม</p>
+                </div>
+                <div class="bg-white border-t-4 border-pp-orange shadow-md p-6 hover:shadow-xl transition">
+                    <div class="w-12 h-12 bg-orange-50 flex items-center justify-center mb-4"><i class="fas fa-users text-pp-orange text-2xl"></i></div>
+                    <h4 class="font-bold text-lg mb-2">จัดตั้งศูนย์รับเรื่องเคลื่อนที่</h4>
+                    <p class="text-sm text-gray-600">ออกหน่วยรับฟังปัญหาพี่น้องประชาชนทุกวันหยุดเสาร์-อาทิตย์ เพื่อเข้าถึงปัญหาที่แท้จริง</p>
+                </div>
+                <div class="bg-white border-t-4 border-pp-orange shadow-md p-6 hover:shadow-xl transition">
+                    <div class="w-12 h-12 bg-orange-50 flex items-center justify-center mb-4"><i class="fas fa-trash-alt text-pp-orange text-2xl"></i></div>
+                    <h4 class="font-bold text-lg mb-2">บริหารจัดการขยะชุมชน</h4>
+                    <p class="text-sm text-gray-600">หารือ กทม. เพิ่มความถี่รถขยะเข้าจัดเก็บในชุมชนแออัด ป้องกันปัญหาขยะตกค้าง</p>
+                </div>
+                <div class="bg-white border-t-4 border-pp-orange shadow-md p-6 hover:shadow-xl transition">
+                    <div class="w-12 h-12 bg-orange-50 flex items-center justify-center mb-4"><i class="fas fa-tree text-pp-orange text-2xl"></i></div>
+                    <h4 class="font-bold text-lg mb-2">โครงการ 'พื้นที่สีเขียว' ใกล้บ้าน</h4>
+                    <p class="text-sm text-gray-600">ปรับปรุงที่รกร้างเป็นสวนหย่อมขนาดเล็ก (Pocket Park) ให้คนในชุมชนมีที่พักผ่อน</p>
+                </div>
+                <div class="bg-white border-t-4 border-pp-orange shadow-md p-6 hover:shadow-xl transition">
+                    <div class="w-12 h-12 bg-orange-50 flex items-center justify-center mb-4"><i class="fas fa-hand-holding-heart text-pp-orange text-2xl"></i></div>
+                    <h4 class="font-bold text-lg mb-2">ตรวจเยี่ยมกลุ่มเปราะบาง</h4>
+                    <p class="text-sm text-gray-600">มอบสิ่งของบรรเทาทุกข์และประสานสวัสดิการรัฐให้ผู้ป่วยติดเตียงและผู้สูงอายุในพื้นที่</p>
+                </div>
+                <div class="bg-white border-t-4 border-pp-orange shadow-md p-6 hover:shadow-xl transition">
+                    <div class="w-12 h-12 bg-orange-50 flex items-center justify-center mb-4"><i class="fas fa-tint text-pp-orange text-2xl"></i></div>
+                    <h4 class="font-bold text-lg mb-2">แก้ปัญหาน้ำประปาไหลอ่อน</h4>
+                    <p class="text-sm text-gray-600">เร่งรัดการประปาฯ ปรับปรุงแรงดันน้ำในเขตพื้นที่ปลายท่อให้ใช้งานได้ปกติ</p>
+                </div>
+                <div class="bg-white border-t-4 border-pp-orange shadow-md p-6 hover:shadow-xl transition">
+                    <div class="w-12 h-12 bg-orange-50 flex items-center justify-center mb-4"><i class="fas fa-comments-dollar text-pp-orange text-2xl"></i></div>
+                    <h4 class="font-bold text-lg mb-2">สัมมนา 'เศรษฐกิจชุมชน'</h4>
+                    <p class="text-sm text-gray-600">อบรมทักษะออนไลน์ให้พ่อค้าแม่ค้าในตลาดท้องถิ่น เพื่อขยายช่องทางการขายเพิ่มรายได้</p>
+                </div>
+            </div>
+        </section>
 
-        <div class="form-group">
-            <label>รายละเอียด:</label>
-            <textarea id="details" rows="4" placeholder="อธิบายปัญหาที่พบ..."></textarea>
-        </div>
+        <section id="report" class="py-20 bg-white">
+            <div class="container mx-auto px-4 max-w-3xl">
+                <div class="flex items-center space-x-4 mb-8">
+                    <div class="h-10 w-2 bg-pp-orange"></div>
+                    <h3 class="text-3xl font-black text-slate-900">แจ้งเรื่องร้องเรียน</h3>
+                </div>
+                <div class="bg-slate-50 p-8 border border-slate-200">
+                    <form id="reportForm" class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">หัวข้อเรื่องที่ต้องการแจ้ง</label>
+                            <input type="text" id="title" class="w-full p-4 border-2 border-slate-200 focus:border-pp-orange outline-none transition" placeholder="เช่น ท่อระบายน้ำอุดตัน" required>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">หมวดหมู่ปัญหา</label>
+                                <select id="category" class="w-full p-4 border-2 border-slate-200 focus:border-pp-orange outline-none bg-white">
+                                    <option>สาธารณูปโภค (น้ำ/ไฟ/ถนน)</option>
+                                    <option>สิ่งแวดล้อม/ขยะ</option>
+                                    <option>ความปลอดภัย/อาชญากรรม</option>
+                                    <option>สวัสดิการ/สังคม</option>
+                                    <option>อื่นๆ</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">ลงชื่อผู้แจ้ง</label>
+                                <input type="text" id="name" class="w-full p-4 border-2 border-slate-200 focus:border-pp-orange outline-none" placeholder="ชื่อ-นามสกุล" required>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">เบอร์โทรศัพท์ติดต่อ</label>
+                            <input type="tel" id="phone" class="w-full p-4 border-2 border-slate-200 focus:border-pp-orange outline-none" placeholder="08x-xxxxxxx" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">รายละเอียดของปัญหา</label>
+                            <textarea id="details" rows="5" class="w-full p-4 border-2 border-slate-200 focus:border-pp-orange outline-none transition" placeholder="ระบุตำแหน่งที่เกิดเหตุ และข้อมูลเพิ่มเติม..." required></textarea>
+                        </div>
 
-        <button class="btn-submit" id="submit-btn" onclick="submitData()">บันทึก</button>
-        <p id="status" class="status-msg"></p>
+                        <button type="submit" id="submitBtn" class="w-full bg-pp-orange text-white font-black py-5 text-xl hover:bg-slate-900 transition-all shadow-xl">
+                            <span id="btnText">ส่งข้อมูลแจ้งเรื่องทันที</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <footer class="bg-slate-900 text-slate-400 py-12 text-center border-t-4 border-pp-orange">
+            <div class="mb-4 flex justify-center space-x-6 text-white text-xl">
+                <i class="fab fa-facebook hover:text-pp-orange cursor-pointer"></i>
+                <i class="fab fa-twitter hover:text-pp-orange cursor-pointer"></i>
+                <i class="fab fa-line hover:text-pp-orange cursor-pointer"></i>
+            </div>
+            <p class="font-bold">© 2026 ทีมงาน สส. มานะ กล้าหาญ | มุ่งมั่นเพื่อความเปลี่ยนแปลง</p>
+        </footer>
     </div>
 
-    <div id="map"></div>
+    <div id="admin-view" class="admin-mode min-h-screen bg-slate-900 text-white">
+        <nav class="bg-slate-800 p-4 flex justify-between items-center border-b border-pp-orange">
+            <h1 class="text-xl font-bold text-pp-orange uppercase italic">Backend System</h1>
+            <button onclick="toggleView()" class="text-xs bg-slate-700 px-4 py-2 hover:bg-pp-orange transition">EXIT ADMIN</button>
+        </nav>
+        <div class="container mx-auto p-8">
+            <div class="bg-slate-800 border border-slate-700 p-6">
+                <h2 class="text-2xl font-bold mb-6 flex items-center">
+                    <span class="w-2 h-6 bg-pp-orange mr-3"></span>
+                    รายการร้องเรียนล่าสุด
+                </h2>
+                <div class="overflow-x-auto text-sm">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-700 text-pp-orange uppercase">
+                            <tr>
+                                <th class="p-4">หัวข้อ</th>
+                                <th class="p-4">ผู้แจ้ง/ติดต่อ</th>
+                                <th class="p-4">หมวดหมู่</th>
+                                <th class="p-4">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminTableBody">
+                            <tr class="border-b border-slate-700">
+                                <td class="p-4 italic text-slate-500 text-center" colspan="4">ยังไม่มีข้อมูลใหม่ในเซสชั่นนี้</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <button onclick="toggleView()" class="fixed bottom-6 right-6 bg-slate-900 text-pp-orange w-12 h-12 shadow-2xl flex items-center justify-center hover:scale-110 transition-all z-[60] border-2 border-pp-orange">
+        <i class="fas fa-fingerprint"></i>
+    </button>
+
     <script>
-        const map = L.map('map').setView([18.1445, 100.1415], 14);
-        L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png', { attribution: 'OSM' }).addTo(map);
+        // *** วาง URL ของ Google Apps Script ของคุณที่นี่ ***
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw5aKDUF5Ciw47zrBCiChkX-kZvJYtpNlSV_6juOYwmO_4GtgwrM_-fUC5DhHnLa3EQ/exec';
 
-        let tempMarker = null;
-        let selectedLatLng = null;
+        document.getElementById('reportForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            
+            btn.disabled = true;
+            btnText.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-2"></i> กำลังส่งข้อมูลเข้าระบบ...';
 
-        map.on('click', function(e) {
-            selectedLatLng = e.latlng;
-            if (tempMarker) map.removeLayer(tempMarker);
-            tempMarker = L.marker(selectedLatLng).addTo(map);
-            document.getElementById('display-coords').innerText = 
-                `Lat: ${selectedLatLng.lat.toFixed(5)}, Lng: ${selectedLatLng.lng.toFixed(5)}`;
+            const formData = {
+                title: document.getElementById('title').value,
+                category: document.getElementById('category').value,
+                details: document.getElementById('details').value,
+                name: document.getElementById('name').value,
+                phone: document.getElementById('phone').value
+            };
+
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(formData)
+            })
+            .then(res => {
+                alert('ขอบคุณที่ร่วมแจ้งปัญหา! ข้อมูลถูกส่งถึงทีมงาน สส. เรียบร้อยแล้ว');
+                
+                // อัปเดตตาราง Admin (Mockup)
+                const tableBody = document.getElementById('adminTableBody');
+                if(tableBody.innerText.includes('ยังไม่มีข้อมูล')){ tableBody.innerHTML = ''; }
+                
+                const row = `
+                    <tr class="border-b border-slate-700 hover:bg-slate-750 transition">
+                        <td class="p-4 font-bold text-white">${formData.title}</td>
+                        <td class="p-4 text-slate-400">${formData.name}<br>${formData.phone}</td>
+                        <td class="p-4"><span class="bg-pp-orange text-white px-2 py-1 text-[10px] font-bold">${formData.category}</span></td>
+                        <td class="p-4"><button class="text-pp-orange hover:underline">รับเรื่อง</button></td>
+                    </tr>
+                `;
+                tableBody.insertAdjacentHTML('afterbegin', row);
+                document.getElementById('reportForm').reset();
+            })
+            .catch(err => alert('ขออภัย ระบบขัดข้องชั่วคราว'))
+            .finally(() => {
+                btn.disabled = false;
+                btnText.innerText = 'ส่งข้อมูลแจ้งเรื่องทันที';
+            });
         });
 
-        function submitData() {
-            if (!selectedLatLng) {
-                alert("กรุณาคลิกเลือกจุด");
-                return;
+        function toggleView() {
+            const user = document.getElementById('user-view');
+            const admin = document.getElementById('admin-view');
+            if (user.style.display === "none") {
+                user.style.display = "block";
+                admin.style.display = "none";
+            } else {
+                user.style.display = "none";
+                admin.style.display = "block";
             }
-
-            const formData = new FormData();
-            formData.append('lat', selectedLatLng.lat);
-            formData.append('lng', selectedLatLng.lng);
-            formData.append('type', document.getElementById('problem-type').value);
-            formData.append('details', document.getElementById('details').value);
-
-            const btn = document.getElementById('submit-btn');
-            btn.disabled = true;
-
-            fetch('https://script.google.com/macros/s/AKfycby_fNw135SFPcUE2XTye8wY_n6HmcTXGboTzJhOfYOJt9pt2U8kfvXGc_n8unu4OP02/exec', {
-                method: 'POST',
-                body: formData
-            })
-            .then(() => {
-                document.getElementById('status').innerText = "✅ สำเร็จ!";
-                document.getElementById('status').className = 'status-msg success';
-                document.getElementById('details').value = "";
-                setTimeout(() => { btn.disabled = false; }, 2000);
-            })
-            .catch(error => {
-                document.getElementById('status').innerText = "❌ ข้อผิดพลาด";
-                document.getElementById('status').className = 'status-msg error';
-                btn.disabled = false;
-            });
         }
     </script>
 </body>
