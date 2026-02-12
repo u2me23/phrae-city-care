@@ -1,43 +1,147 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
-    <title>Form</title>
+    <meta charset="UTF-8">
+    <title>Phrae City Care - รายงานปัญหาเมืองแพร่</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Kanit', sans-serif; margin: 0; display: flex; height: 100vh; }
+        #map { flex-grow: 1; height: 100%; }
+        
+        /* แถบด้านข้างสำหรับกรอกข้อมูล */
+        .sidebar {
+            width: 350px;
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .header { border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-bottom: 10px; }
+        .header h2 { margin: 0; color: #007bff; font-size: 1.5rem; }
+
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        label { font-weight: 600; color: #444; }
+        input, select, textarea {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: 'Kanit', sans-serif;
+        }
+
+        .btn-submit {
+            background: #28a745;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.3s;
+        }
+        .btn-submit:hover { background: #218838; }
+        
+        .status-msg { font-size: 0.9rem; color: #666; font-style: italic; }
+        .coords { font-size: 0.8rem; color: #999; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="header">
+            <h2>📍 รายงานปัญหา</h2>
+            <p style="font-size: 0.85rem; color: #666;">คลิกบนแผนที่เพื่อเลือกจุดที่พบปัญหา</p>
+        </div>
+
+        <div class="form-group">
+            <label>พิกัดที่เลือก:</label>
+            <div class="coords" id="display-coords">ยังไม่ได้เลือกจุด</div>
+        </div>
+
+        <div class="form-group">
+            <label>ประเภทปัญหา:</label>
+            <select id="problem-type">
+                <option value="ถนน/ทางเท้า">ถนน/ทางเท้า</option>
+                <option value="ขยะ/ความสะอาด">ขยะ/ความสะอาด</option>
+                <option value="ไฟฟ้าส่องสว่าง">ไฟฟ้าส่องสว่าง</option>
+                <option value="ท่อระบายน้ำ">ท่อระบายน้ำ</option>
+                <option value="อื่นๆ">อื่นๆ</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>รายละเอียด:</label>
+            <textarea id="details" rows="4" placeholder="อธิบายปัญหาที่พบ..."></textarea>
+        </div>
+
+        <button class="btn-submit" onclick="submitData()">บันทึกข้อมูลลง Google Sheet</button>
+        <p id="status" class="status-msg"></p>
+    </div>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        function submitForm(event) {
-            event.preventDefault();
-            const button = document.getElementById('submit-button');
-            button.disabled = true; // Disable button after submission
+        // ตั้งค่าแผนที่เมืองแพร่
+        const map = L.map('map').setView([18.1445, 100.1415], 14);
+        L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png', { attribution: 'OSM' }).addTo(map);
 
-            const formData = new FormData(event.target);
-            const timestamp = new Date().toISOString(); // Timestamp recording
+        let tempMarker = null;
+        let selectedLatLng = null;
 
-            fetch('https://script.google.com/macros/s/AKfycbySWftGSOK8YDfatoTI98enPuz-cPd1igj464k9K9hfVYc7fNC3KxNtr252Ms6fBVgmEQ/exec', {
+        // เมื่อคลิกแผนที่
+        map.on('click', function(e) {
+            selectedLatLng = e.latlng;
+            
+            // ปักหมุดชั่วคราว
+            if (tempMarker) map.removeLayer(tempMarker);
+            tempMarker = L.marker(selectedLatLng).addTo(map);
+            
+            // อัปเดตพิกัดในฟอร์ม
+            document.getElementById('display-coords').innerText = 
+                `Lat: ${selectedLatLng.lat.toFixed(5)}, Lng: ${selectedLatLng.lng.toFixed(5)}`;
+        });
+
+        // ส่งข้อมูล
+        function submitData() {
+            if (!selectedLatLng) {
+                alert("กรุณาคลิกเลือกจุดบนแผนที่ก่อนครับ");
+                return;
+            }
+
+            const data = {
+                lat: selectedLatLng.lat,
+                lng: selectedLatLng.lng,
+                type: document.getElementById('problem-type').value,
+                details: document.getElementById('details').value
+            };
+
+            document.getElementById('status').innerText = "กำลังบันทึก...";
+
+            // URL ของ Google Apps Script ที่คุณ Deploy ไว้
+            const scriptURL = 'https://script.google.com/macros/s/AKfycbySWftGSOK8YDfatoTI98enPuz-cPd1igj464k9K9hfVYc7fNC3KxNtr252Ms6fBVgmEQ/exec';
+
+            fetch(scriptURL, {
                 method: 'POST',
-                body: formData
+                mode: 'no-cors',
+                body: JSON.stringify(data)
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                alert('Form submitted successfully at ' + timestamp);
+            .then(() => {
+                document.getElementById('status').innerText = "✅ บันทึกสำเร็จ!";
+                // ล้างฟอร์ม
+                document.getElementById('details').value = "";
+                // อาจจะเปลี่ยนสีหมุดเพื่อบอกว่าบันทึกแล้ว
+                L.circle(selectedLatLng, {radius: 50, color: 'red'}).addTo(map);
             })
             .catch(error => {
-                alert('There was a problem with your submission: ' + error.message);
-            })
-            .finally(() => {
-                button.disabled = false; // Re-enable button
+                document.getElementById('status').innerText = "❌ เกิดข้อผิดพลาด";
+                console.error('Error!', error.message);
             });
         }
     </script>
-</head>
-<body>
-    <form id="myForm" onsubmit="submitForm(event)">
-        <label for="name">Name:</label>
-        <input type="text" id="name" name="name" required>
-        <input type="submit" id="submit-button" value="Submit">
-    </form>
 </body>
 </html>
