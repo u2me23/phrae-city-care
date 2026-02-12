@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phrae City Care</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 400px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Phrae City Care Issue Reporting</h1>
+    <div id="map"></div>
+    <form id="report-form">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required><br>
+        <label for="issue">Issue:</label>
+        <textarea id="issue" name="issue" required></textarea><br>
+        <input type="hidden" id="lat" name="lat">
+        <input type="hidden" id="lng" name="lng">
+        <button type="submit">Submit</button>
+    </form>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        // Initialize the map
+        const map = L.map('map').setView([18.1678, 99.3315], 13);
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // Add a marker on click
+        map.on('click', function(e) {
+            const lat = e.latlng.lat;
+            const lng = e.latlng.lng;
+            L.marker([lat, lng]).addTo(map);
+            document.getElementById('lat').value = lat;
+            document.getElementById('lng').value = lng;
+        });
+
+        // Handle form submission
+        document.getElementById('report-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+            fetch('https://script.google.com/macros/s/YOUR_GOOGLE_APPS_SCRIPT_URL/exec', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Issue reported successfully!');
+                this.reset();
+                map.eachLayer(function(layer) {
+                    if (layer instanceof L.Marker) {
+                        map.removeLayer(layer);
+                    }
+                });
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
+</html>
